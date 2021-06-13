@@ -1,14 +1,19 @@
-import {Settings} from './Settings';
+import {ParsedOptions, Settings} from './Settings';
 import {AbstractNovelInfo} from './AbstractNovelInfo';
 
 type Target = AbstractNovelInfo & { keyword?: string[] };
 
 const customTargets: Target[] = [];
+const customNgUser: string[] = [];
+let customIndex = 0;
 let connecting = false;
 
 export function applyFilter(target: Target[]): void {
   customTargets.splice(0);
+  customNgUser.splice(0);
+  customIndex = 0;
   Settings.loadParsed().then((options) => {
+    customNgUser.push(...options.customNgUser);
     target.forEach((it) => {
       if (
         options.ngCode.includes(it.ncode) ||
@@ -17,13 +22,13 @@ export function applyFilter(target: Target[]): void {
       ) {
         it.disable();
       } else if (options.userCustomFilter) {
-        applyCustomFilter(it, options.customFilter);
+        applyCustomFilter(it, options);
       }
     });
   }, console.error);
 }
 
-function applyCustomFilter(target: Target, fun: string): void {
+function applyCustomFilter(target: Target, options: ParsedOptions): void {
   target.disable();
   customTargets.push(target);
   if (connecting) {
@@ -31,14 +36,22 @@ function applyCustomFilter(target: Target, fun: string): void {
   }
   connecting = true;
   setTimeout(async () => {
-    let t = customTargets.pop();
-    while (t) {
-      const ret = await custom(t.userId, t.ncode, fun);
-      ret || t.enable();
+    while (customIndex < customTargets.length) {
+      const t = customTargets[customIndex++];
+      if (customNgUser.includes(t.userId)) {
+        continue;
+      }
+      if (await custom(t.userId, t.ncode, options.customFilter)) {
+        customNgUser.push(t.userId);
+      } else {
+        t.enable();
+      }
       await sleep(200);
-      t = customTargets.pop();
     }
     connecting = false;
+    if (options.userCustomFilter && options.saveCustomNgUser) {
+      Settings.saveNgUsers(customNgUser);
+    }
   }, 0);
 }
 
