@@ -1,0 +1,45 @@
+{
+  "name": "narou-filter",
+  "version": "1.0.0",
+  "description": "Firefox addon",
+  "scripts": {
+    "build": "cpx src/**/*.!(ts) dist && cpx manifest.json dist && parcel build src/**/*.ts --no-source-maps",
+    "clean": "rimraf dist",
+    "zip": "web-ext build",
+    "start": "web-ext run",
+    "lint": "eslint --fix src/**/*.ts"
+  },
+  "author": "furubarug",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.26.1",
+    "@typescript-eslint/parser": "^4.26.1",
+    "cpx": "^1.5.0",
+    "eslint": "^7.28.0",
+    "eslint-config-google": "^0.14.0",
+    "parcel": "^2.0.0-beta.3.1",
+    "typescript": "^4.3.2",
+    "web-ext": "^6.1.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "google"
+    ],
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "rules": {
+      "require-jsdoc": "off"
+    }
+  },
+  "webExt": {
+    "sourceDir": "dist/"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "manifest_version": 2,
+  "name": "narou-filter",
+  "description": "なろうの小説をフィルターする",
+  "version": "1.0",
+  "homepage_url": "https://github.com/furubarug",
+  "icons": {
+    "48": "icons/icon48.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "options_ui": {
+    "page": "options/options.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "narou-filter@furubarug"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://yomou.syosetu.com/rank/genretop/",
+        "https://yomou.syosetu.com/rank/top/",
+        "https://yomou.syosetu.com/rank/isekaitop/"
+      ],
+      "js": [
+        "RankTop.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://yomou.syosetu.com/rank/genrelist/**",
+        "https://yomou.syosetu.com/rank/list/**",
+        "https://yomou.syosetu.com/rank/isekailist/**"
+      ],
+      "js": [
+        "RankList.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://yomou.syosetu.com/search.php**",
+        "https://yomou.syosetu.com/search/**"
+      ],
+      "js": [
+        "SearchList.js"
+      ]
+    }
+  ]
+}
