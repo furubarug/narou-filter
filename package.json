@@ -1,6 +1,6 @@
 {
   "name": "narou-filter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Firefox addon",
   "scripts": {
     "build": "cpx src/**/*.!(ts) dist && cpx manifest.json dist && cpx node_modules/milligram/dist/milligram.min.css dist/options && parcel build src/**/*.ts --no-source-maps",

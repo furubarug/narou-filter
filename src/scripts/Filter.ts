@@ -60,12 +60,12 @@ function sleep(ms: number): Promise<void> {
 }
 
 type Filter = (userId: string, ncode: string) => Promise<any>;
+const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 
 async function custom(userId: string, ncode: string, fun: string)
   : Promise<boolean> {
   try {
-    // noinspection JSUnusedLocalSymbols
-    const filter: Filter = eval('async (userId, ncode) => {' + fun + '}');
+    const filter: Filter = new AsyncFunction('userId', 'ncode', fun);
     return await filter(userId, ncode) === true;
   } catch (e) {
     console.error(e);
