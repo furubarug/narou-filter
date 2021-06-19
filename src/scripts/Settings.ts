@@ -62,10 +62,9 @@ function parse(str: string): string[] {
 }
 
 function getCache(cache: Cache | { updated: undefined, cache: undefined }, options: Options): Record<string, boolean> {
-  if (!cache.updated || !cache.cache) return {};
-  if (options.customCacheHour < 0) return cache.cache;
-  if ((new Date()).getTime() - cache.updated < options.customCacheHour * 1000 * 60 * 60) return {};
-  return cache.cache;
+  if (typeof cache.updated !== 'number' || !cache.cache) return {};
+  if (options.customCacheHour < 0 || (new Date()).getTime() - cache.updated < options.customCacheHour * 1000 * 60 * 60) return cache.cache;
+  return {};
 }
 
 export namespace Settings {
