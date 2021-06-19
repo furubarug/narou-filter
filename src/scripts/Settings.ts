@@ -11,21 +11,27 @@ export interface Options {
   ngUser: string,
   ngCode: string,
   ngKeyword: string,
-  userCustomFilter: boolean;
+  useCustomFilter: boolean;
   saveCustomNgUser: boolean;
-  customNgUser: string;
   customFilter: string;
+  customCacheHour: number;
+  customCache: string;
 }
 
 export interface ParsedOptions {
   ngUser: string[],
   ngCode: string[],
   ngKeyword: string[],
-  userCustomFilter: boolean;
+  useCustomFilter: boolean;
   saveCustomNgUser: boolean;
-  customNgUser: string[];
   customFilter: string;
+  customCache: Record<string, boolean>;
 }
+
+type Cache = {
+  cache: Record<string, boolean>,
+  updated: number
+};
 
 const delimiter = /[\s,.|:;]+/;
 
@@ -44,14 +50,22 @@ const defaultOptions: Options = {
   ngUser: '',
   ngCode: '',
   ngKeyword: '',
-  userCustomFilter: false,
+  useCustomFilter: false,
   saveCustomNgUser: true,
-  customNgUser: '',
   customFilter: defaultFilter,
+  customCacheHour: -1,
+  customCache: '{}',
 };
 
 function parse(str: string): string[] {
   return str.split(delimiter);
+}
+
+function getCache(cache: Cache | { updated: undefined, cache: undefined }, options: Options): Record<string, boolean> {
+  if (!cache.updated || !cache.cache) return {};
+  if (options.customCacheHour < 0) return cache.cache;
+  if ((new Date()).getTime() - cache.updated < options.customCacheHour * 1000 * 60 * 60) return {};
+  return cache.cache;
 }
 
 export namespace Settings {
@@ -63,21 +77,26 @@ export namespace Settings {
     return browser.storage.sync.get(defaultOptions);
   }
 
-  export function saveNgUsers(ngUsers: string[]): void {
-    const customNgUser = ngUsers.join(' ');
-    load().then((options) => save({...options, customNgUser}), console.error);
+  export function saveCustomCache(cache: Record<string, boolean>): void {
+    const cacheBase: Cache = {
+      cache,
+      updated: (new Date()).getTime(),
+    };
+    const customCache: string = JSON.stringify(cacheBase as any);
+    load().then((options) => save({...options, customCache}), console.error);
   }
 
   export async function loadParsed(): Promise<ParsedOptions> {
     const options = await load();
+    const customCache = getCache(JSON.parse(options.customCache), options);
     return {
       ngUser: parse(options.ngUser),
       ngCode: parse(options.ngCode),
       ngKeyword: parse(options.ngKeyword),
-      userCustomFilter: options.userCustomFilter,
+      useCustomFilter: options.useCustomFilter,
       saveCustomNgUser: options.saveCustomNgUser,
-      customNgUser: parse(options.customNgUser),
       customFilter: options.customFilter,
+      customCache,
     };
   }
 

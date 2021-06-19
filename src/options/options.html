@@ -23,8 +23,8 @@
         <input type="checkbox" id="saveCustom">
         <label for="customFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
         <textarea id="customFilter" placeholder="引数がuserId（ユーザーID）とncode（Nコード）の非同期関数"></textarea>
-        <label for="customNg">カスタムNGユーザーID</label>
-        <input type="text" id="customNg">
+        <label for="cacheHour">カスタムキャッシュ保持時間</label>
+        <input type="number" id="cacheHour" placeholder="単位はh, 0でキャッシュなし, 負数で永続">
         <button type="button" id="reset" class="button button-outline">Reset</button>
         <button type="submit" class="button">Save</button>
     </fieldset>
