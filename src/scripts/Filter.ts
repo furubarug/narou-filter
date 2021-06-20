@@ -26,8 +26,7 @@ export function applyFilter(target: AbstractNovelInfo[]): void {
   }, console.error);
 }
 
-function applyCustomFilter(target: AbstractNovelInfo, options: ParsedOptions)
-  : void {
+function applyCustomFilter(target: AbstractNovelInfo, options: ParsedOptions): void {
   target.disable();
   customTargets.push(target);
   if (connecting) {
@@ -62,8 +61,7 @@ function sleep(ms: number): Promise<void> {
 
 type Filter = (userId: string, ncode: string) => Promise<any>;
 
-async function custom(userId: string, ncode: string, filter: Filter)
-  : Promise<boolean> {
+async function custom(userId: string, ncode: string, filter: Filter): Promise<boolean> {
   try {
     return await filter(userId, ncode) === true;
   } catch (e) {

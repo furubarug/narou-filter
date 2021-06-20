@@ -35,7 +35,6 @@ type Cache = {
 
 const delimiter = /[\s,.|:;]+/;
 
-/* eslint-disable max-len */
 const defaultFilter =
   `const url = \`https://api.syosetu.com/novelapi/api/?out=json&libtype=2&userid=\${userId}\`;
 const res = await fetch(url);
@@ -61,9 +60,14 @@ function parse(str: string): string[] {
   return str.split(delimiter);
 }
 
-function getCache(cache: Cache | { updated: undefined, cache: undefined }, options: Options): Record<string, boolean> {
+function getCache(cache: Cache | { updated: undefined, cache: undefined }, options: Options)
+  : Record<string, boolean> {
   if (typeof cache.updated !== 'number' || !cache.cache) return {};
-  if (options.customCacheHour < 0 || (new Date()).getTime() - cache.updated < options.customCacheHour * 1000 * 60 * 60) return cache.cache;
+  if (options.customCacheHour < 0 ||
+    (new Date()).getTime() - cache.updated < options.customCacheHour * 1000 * 60 * 60
+  ) {
+    return cache.cache;
+  }
   return {};
 }
 
