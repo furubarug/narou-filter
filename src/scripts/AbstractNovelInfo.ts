@@ -6,4 +6,6 @@ export abstract class AbstractNovelInfo {
   abstract readonly ncode: string;
 
   abstract readonly userId: string;
+
+  abstract readonly keyword: string[] | undefined;
 }

@@ -1,14 +1,12 @@
 import {ParsedOptions, Settings} from './Settings';
 import {AbstractNovelInfo} from './AbstractNovelInfo';
 
-type Target = AbstractNovelInfo & { keyword?: string[] };
-
-const customTargets: Target[] = [];
+const customTargets: AbstractNovelInfo[] = [];
 let cache: Record<string, boolean> = {};
 let customIndex = 0;
 let connecting = false;
 
-export function applyFilter(target: Target[]): void {
+export function applyFilter(target: AbstractNovelInfo[]): void {
   customTargets.splice(0);
   cache = {};
   customIndex = 0;
@@ -28,7 +26,8 @@ export function applyFilter(target: Target[]): void {
   }, console.error);
 }
 
-function applyCustomFilter(target: Target, options: ParsedOptions): void {
+function applyCustomFilter(target: AbstractNovelInfo, options: ParsedOptions)
+  : void {
   target.disable();
   customTargets.push(target);
   if (connecting) {

@@ -25,6 +25,8 @@ class RankingTopNovelInfo extends AbstractNovelInfo {
     super();
   }
 
+  readonly keyword: undefined;
+
   disable(): void {
     this.elm.style.display = 'none';
   }
