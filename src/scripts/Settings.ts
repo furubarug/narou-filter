@@ -6,7 +6,6 @@ export type Options = {
   saveCustomNgUser: boolean;
   customFilter: string;
   customCacheHour: number;
-  customCache: string;
 }
 
 export type ParsedOptions = {
@@ -16,13 +15,10 @@ export type ParsedOptions = {
   useCustomFilter: boolean;
   saveCustomNgUser: boolean;
   customFilter: string;
-  customCache: Record<string, boolean>;
+  customCache: Cache;
 }
 
-type Cache = {
-  cache: Record<string, boolean>,
-  updated: number
-};
+export type Cache = Record<string, undefined | { updated?: number, filter?: boolean }>;
 
 const delimiter = /[\s,.|:;]+/;
 
@@ -44,22 +40,34 @@ const defaultOptions: Options = {
   saveCustomNgUser: true,
   customFilter: defaultFilter,
   customCacheHour: -1,
-  customCache: '{}',
 };
 
 function parse(str: string): string[] {
   return str.split(delimiter);
 }
 
-function getCache(cache: Cache | { updated: undefined, cache: undefined }, options: Options)
-  : Record<string, boolean> {
-  if (typeof cache.updated !== 'number' || !cache.cache) return {};
-  if (options.customCacheHour < 0 ||
-    (new Date()).getTime() - cache.updated < options.customCacheHour * 1000 * 60 * 60
-  ) {
-    return cache.cache;
+function getCache(cacheBase: unknown, options: Options): Cache {
+  if (typeof cacheBase !== 'string') return {};
+  let cache: Cache;
+  try {
+    cache = JSON.parse(cacheBase);
+  } catch (_) {
+    return {};
   }
-  return {};
+  if (typeof cache !== 'object') return {};
+  const newCache: Cache = {};
+  Object.keys(cache).forEach((key) => {
+    const v = cache[key];
+    if (!v || typeof v.updated !== 'number' || typeof v.filter !== 'boolean') {
+      return;
+    }
+    if (options.customCacheHour < 0 ||
+      (new Date()).getTime() - v.updated < options.customCacheHour * 1000 * 60 * 60
+    ) {
+      newCache[key] = v;
+    }
+  });
+  return newCache;
 }
 
 export namespace Settings {
@@ -72,18 +80,9 @@ export namespace Settings {
     return browser.storage.sync.get(defaultOptions);
   }
 
-  export function saveCustomCache(cache: Record<string, boolean>): void {
-    const cacheBase: Cache = {
-      cache,
-      updated: (new Date()).getTime(),
-    };
-    const customCache: string = JSON.stringify(cacheBase as any);
-    load().then((options) => save({...options, customCache}), console.error);
-  }
-
   export async function loadParsed(): Promise<ParsedOptions> {
     const options = await load();
-    const customCache = getCache(JSON.parse(options.customCache), options);
+    const local = await browser.storage.local.get({customCache: '{}'});
     return {
       ngUser: parse(options.ngUser),
       ngCode: parse(options.ngCode),
@@ -91,8 +90,13 @@ export namespace Settings {
       useCustomFilter: options.useCustomFilter,
       saveCustomNgUser: options.saveCustomNgUser,
       customFilter: options.customFilter,
-      customCache,
+      customCache: getCache(local.customCache, options),
     };
+  }
+
+  export function saveCustomCache(cache: Cache): void {
+    const customCache: string = JSON.stringify(cache as any);
+    browser.storage.local.set({customCache});
   }
 
   export function getDefault(): Options {

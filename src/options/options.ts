@@ -24,32 +24,22 @@ function getCustomCacheHour(): HTMLInputElement {
   return document.querySelector('#cacheHour') as HTMLInputElement;
 }
 
-function getCustomCache(): HTMLInputElement {
-  return document.querySelector('#cache') as HTMLInputElement;
-}
-
 function getCustomFilter(): HTMLTextAreaElement {
   return document.querySelector('#customFilter') as HTMLTextAreaElement;
 }
 
 function saveOptions(e: Event): void {
   e.preventDefault();
-  Settings.load().then((options) => {
-    const hour: number = Number(getCustomCacheHour().value);
-    const customFilter = getCustomFilter().value;
-    const cacheValue = getCustomCache().value;
-    const isCache = options.customFilter === customFilter &&
-      typeof JSON.parse(cacheValue) === 'object';
-    Settings.save({
-      ngUser: getNgUser().value,
-      ngCode: getNgCode().value,
-      ngKeyword: getNgKeyword().value,
-      useCustomFilter: getUseCustom().checked,
-      saveCustomNgUser: getSaveCustom().checked,
-      customFilter,
-      customCacheHour: Number.isNaN(hour) ? -1 : hour,
-      customCache: isCache ? cacheValue : JSON.stringify({}),
-    });
+  const hour: number = Number(getCustomCacheHour().value);
+  const customFilter = getCustomFilter().value;
+  Settings.save({
+    ngUser: getNgUser().value,
+    ngCode: getNgCode().value,
+    ngKeyword: getNgKeyword().value,
+    useCustomFilter: getUseCustom().checked,
+    saveCustomNgUser: getSaveCustom().checked,
+    customFilter,
+    customCacheHour: Number.isNaN(hour) ? -1 : hour,
   });
 }
 
@@ -69,7 +59,6 @@ function setOptions(options: Options) {
   getSaveCustom().checked = options.saveCustomNgUser;
   getCustomFilter().value = options.customFilter;
   getCustomCacheHour().value = String(options.customCacheHour);
-  getCustomCache().value = options.customCache;
 }
 
 function importOptions() {
