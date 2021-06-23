@@ -1,4 +1,4 @@
-import {ParsedOptions, Settings, Cache} from './Settings';
+import {Cache, ParsedOptions, Settings} from './Settings';
 import {AbstractNovelInfo} from './AbstractNovelInfo';
 
 const customTargets: AbstractNovelInfo[] = [];

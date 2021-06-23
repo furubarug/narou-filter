@@ -97,6 +97,12 @@ export namespace Settings {
   export function saveCustomCache(cache: Cache): void {
     const customCache: string = JSON.stringify(cache as any);
     browser.storage.local.set({customCache});
+    load().then((options) => {
+      if (!options.saveCustomNgUser) return;
+      const customNg = [...Object.keys(cache)].filter((it) => cache[it]?.filter);
+      const ngUsers = [...new Set([...parse(options.ngUser), ...customNg])];
+      save({...options, ngUser: ngUsers.join(' ')});
+    });
   }
 
   export function getDefault(): Options {
