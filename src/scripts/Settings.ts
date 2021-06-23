@@ -1,13 +1,4 @@
-declare const browser: {
-  storage: {
-    sync: {
-      set: (op: Options) => any,
-      get: (key: Options) => Promise<Options>
-    }
-  }
-};
-
-export interface Options {
+export type Options = {
   ngUser: string,
   ngCode: string,
   ngKeyword: string,
@@ -18,7 +9,7 @@ export interface Options {
   customCache: string;
 }
 
-export interface ParsedOptions {
+export type ParsedOptions = {
   ngUser: string[],
   ngCode: string[],
   ngKeyword: string[],
@@ -72,6 +63,7 @@ function getCache(cache: Cache | { updated: undefined, cache: undefined }, optio
 }
 
 export namespace Settings {
+
   export function save(options: Options): void {
     browser.storage.sync.set(options);
   }

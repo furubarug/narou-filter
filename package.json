@@ -20,7 +20,8 @@
     "milligram": "^1.4.1",
     "parcel": "^2.0.0-beta.3.1",
     "typescript": "^4.3.2",
-    "web-ext": "^6.1.0"
+    "web-ext": "^6.1.0",
+    "web-ext-types": "^3.2.1"
   },
   "eslintConfig": {
     "root": true,
@@ -34,11 +35,17 @@
     ],
     "env": {
       "browser": true,
-      "node": true
+      "node": true,
+      "webextensions": true
     },
     "rules": {
       "require-jsdoc": "off",
-      "max-len": ["error", { "code": 120 }]
+      "max-len": [
+        "error",
+        {
+          "code": 120
+        }
+      ]
     }
   },
   "webExt": {
