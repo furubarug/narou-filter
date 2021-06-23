@@ -2,7 +2,14 @@
   "compilerOptions": {
     "target": "es2019",
     "module": "commonjs",
-    "lib": ["dom", "dom.Iterable"],
+    "lib": [
+      "dom",
+      "dom.Iterable"
+    ],
+    "typeRoots": [
+      "node_modules/@types",
+      "node_modules/web-ext-types"
+    ],
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
