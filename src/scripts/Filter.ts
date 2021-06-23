@@ -1,17 +1,16 @@
-import {ParsedOptions, Settings} from './Settings';
+import {ParsedOptions, Settings, Cache} from './Settings';
 import {AbstractNovelInfo} from './AbstractNovelInfo';
 
 const customTargets: AbstractNovelInfo[] = [];
-let cache: Record<string, boolean> = {};
+let cache: Cache = {};
 let customIndex = 0;
 let connecting = false;
 
 export function applyFilter(target: AbstractNovelInfo[]): void {
   customTargets.splice(0);
-  cache = {};
   customIndex = 0;
   Settings.loadParsed().then((options) => {
-    cache = {...cache, ...options.customCache};
+    cache = {...options.customCache};
     target.forEach((it) => {
       if (
         options.ngCode.includes(it.ncode) ||
@@ -19,7 +18,7 @@ export function applyFilter(target: AbstractNovelInfo[]): void {
         it.keyword?.some((word) => options.ngKeyword.includes(word))
       ) {
         it.disable();
-      } else if (options.useCustomFilter && cache[it.userId] !== false) {
+      } else if (options.useCustomFilter && cache[it.userId]?.filter !== false) {
         applyCustomFilter(it, options);
       }
     });
@@ -33,6 +32,7 @@ function applyCustomFilter(target: AbstractNovelInfo, options: ParsedOptions): v
     return;
   }
   connecting = true;
+  const updated = (new Date()).getTime();
   const AsyncFun = Object.getPrototypeOf(async () => {
   }).constructor;
   const filter = new AsyncFun('userId', 'ncode', options.customFilter);
@@ -40,11 +40,11 @@ function applyCustomFilter(target: AbstractNovelInfo, options: ParsedOptions): v
     while (customIndex < customTargets.length) {
       const t = customTargets[customIndex++];
       if (cache[t.userId] !== undefined) {
-        cache[t.userId] || t.enable();
+        cache[t.userId]?.filter || t.enable();
       } else {
         const result = await custom(t.userId, t.ncode, filter);
         result || t.enable();
-        cache[t.userId] = result;
+        cache[t.userId] = {updated, filter: result};
         await sleep(30);
       }
     }
