@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="ja">
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="milligram.min.css">
@@ -8,33 +8,11 @@
 </head>
 
 <body>
-
 <form>
     <fieldset>
-        <label for="ngUser">NGユーザーID</label>
-        <input type="text" id="ngUser" placeholder="カンマやスペース区切りのユーザーID">
-        <label for="ngCode">NG小説Nコード</label>
-        <input type="text" id="ngCode" placeholder="カンマやスペース区切りのNコード">
-        <label for="ngKeyword">NGキーワード</label>
-        <input type="text" id="ngKeyword" placeholder="カンマやスペース区切りのキーワード(完全一致)">
-        <label class="label-inline" for="useCustom">カスタムフィルターを使用する</label>
-        <input type="checkbox" id="useCustom">
-        <label class="label-inline" for="saveCustom">フィルタ結果をNGユーザーに追加</label>
-        <input type="checkbox" id="saveCustom">
-        <label for="customFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
-        <textarea id="customFilter" placeholder="引数がuserId（ユーザーID）とncode（Nコード）の非同期関数"></textarea>
-        <label for="cacheHour">カスタムキャッシュ保持時間</label>
-        <input type="number" id="cacheHour" placeholder="単位はh, 0でキャッシュなし, 負数で永続">
-        <button type="button" id="reset" class="button button-outline">Reset</button>
-        <button type="submit" id="save" class="button">Save</button>
-        <div class="float-right">
-            <input type="file" id="file" style="display: none">
-            <button type="button" id="import" class="button button-clear">import</button>
-            <button type="button" id="export" class="button button-clear">export</button>
-        </div>
+        <div id="options"></div>
     </fieldset>
 </form>
-
-<script src="./options.js"></script>
+<script src="options.js"></script>
 </body>
 </html>
