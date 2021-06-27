@@ -1,14 +1,16 @@
-export type Options = {
+type SyncOptions = {
   ngUser: string,
   ngCode: string,
   ngKeyword: string,
+};
+type LocalOptions = {
   useCustomFilter: boolean;
   saveCustomNgUser: boolean;
   customFilter: string;
   customCacheHour: number;
-}
+};
 
-type SyncOptions = Omit<Options, 'customFilter'>;
+export type Options = SyncOptions & LocalOptions;
 
 export type ParsedOptions = {
   ngUser: string[],
@@ -34,15 +36,20 @@ d.setMonth(d.getMonth() - 2);
 const date = d.toISOString().slice(0, 10) + ' ' + d.toTimeString().slice(0, 8);
 return data.filter(it => it.end === 1 && it.novelupdated_at < date).length >= 3;`;
 
-const defaultOptions: Options = {
+const defaultSyncOptions: SyncOptions = {
   ngUser: '',
   ngCode: '',
   ngKeyword: '',
+};
+
+const defaultLocalOptions: LocalOptions = {
   useCustomFilter: false,
   saveCustomNgUser: true,
   customFilter: defaultFilter,
   customCacheHour: -1,
 };
+
+const defaultOptions: Options = {...defaultLocalOptions, ...defaultSyncOptions};
 
 function parse(str: string): string[] {
   return str.split(delimiter);
@@ -75,26 +82,26 @@ function getCache(cacheBase: unknown, customCacheHour: number): Cache {
 export namespace Settings {
 
   export async function save(options: Options) {
-    const customFilter = options.customFilter;
+    // recreate objects to clean for saving
     const syncOptions: SyncOptions = {
       ngUser: options.ngUser,
       ngCode: options.ngCode,
       ngKeyword: options.ngKeyword,
+    };
+    const localOptions: LocalOptions = {
       useCustomFilter: options.useCustomFilter,
       saveCustomNgUser: options.saveCustomNgUser,
       customCacheHour: options.customCacheHour,
-    }; // clean
+      customFilter: options.customFilter,
+    };
     await browser.storage.sync.set(syncOptions);
-    await browser.storage.local.set({customFilter});
+    await browser.storage.local.set(localOptions);
   }
 
   export async function load(): Promise<Options & { customCache: string }> {
-    const syncOptions = await browser.storage.sync.get(defaultOptions);
-    const {customFilter, customCache} = await browser.storage.local.get({
-      customFilter: defaultFilter,
-      customCache: '{}',
-    }); // destructuring assignments to avoid overwriting
-    return {...syncOptions, customFilter, customCache};
+    const syncOptions = await browser.storage.sync.get(defaultSyncOptions);
+    const localOptions = await browser.storage.local.get({...defaultLocalOptions, customCache: '{}'});
+    return {...localOptions, ...syncOptions};
   }
 
   export async function loadParsed(): Promise<ParsedOptions> {
