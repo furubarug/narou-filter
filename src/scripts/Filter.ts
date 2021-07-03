@@ -1,8 +1,10 @@
-import {Cache, ParsedOptions, Settings} from './Settings';
+import {ParsedOptions, Settings} from './Settings';
 import {AbstractNovelInfo} from './AbstractNovelInfo';
+import {getNovelInfoByUserId, sleep} from './NarouAPI';
+import {CustomCache} from './SettingsUtil';
 
 const customTargets: AbstractNovelInfo[] = [];
-let cache: Cache = {};
+let cache: CustomCache = {};
 let customIndex = 0;
 let connecting = false;
 
@@ -33,19 +35,17 @@ function applyCustomFilter(target: AbstractNovelInfo, options: ParsedOptions): v
   }
   connecting = true;
   const updated = (new Date()).getTime();
-  const AsyncFun = Object.getPrototypeOf(async () => {
-  }).constructor;
-  const filter = new AsyncFun('userId', 'ncode', options.customFilter);
   setTimeout(async () => {
     while (customIndex < customTargets.length) {
       const t = customTargets[customIndex++];
       if (cache[t.userId] !== undefined) {
         cache[t.userId]?.filter || t.enable();
       } else {
-        const result = await custom(t.userId, t.ncode, filter);
+        const [{allcount}, ...data] = await getNovelInfoByUserId(t.userId);
+        const result = await options.customFilter(t.userId, t.ncode, allcount, data);
         result || t.enable();
         cache[t.userId] = {updated, filter: result};
-        await sleep(30);
+        await sleep(100);
       }
     }
     connecting = false;
@@ -55,17 +55,3 @@ function applyCustomFilter(target: AbstractNovelInfo, options: ParsedOptions): v
   }, 0);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-type Filter = (userId: string, ncode: string) => Promise<any>;
-
-async function custom(userId: string, ncode: string, filter: Filter): Promise<boolean> {
-  try {
-    return await filter(userId, ncode) === true;
-  } catch (e) {
-    console.error(e);
-    return true;
-  }
-}

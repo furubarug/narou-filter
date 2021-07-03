@@ -1,3 +1,5 @@
+import {createCustomFilterBy, CustomCache, CustomFilter, getCache, parse} from './SettingsUtil';
+
 type SyncOptions = {
   ngUser: string,
   ngCode: string,
@@ -18,19 +20,12 @@ export type ParsedOptions = {
   ngKeyword: string[],
   useCustomFilter: boolean;
   saveCustomNgUser: boolean;
-  customFilter: string;
-  customCache: Cache;
+  customFilter: CustomFilter;
+  customCache: CustomCache;
 }
 
-export type Cache = Record<string, undefined | { updated?: number, filter?: boolean }>;
-
-const delimiter = /[\s,.|:;]+/;
-
 const defaultFilter =
-  `const url = \`https://api.syosetu.com/novelapi/api/?out=json&libtype=2&userid=\${userId}\`;
-const res = await fetch(url);
-const [count, ...data] = await res.json();
-if (count.allcount < 2) return false;
+  `if (allcount < 2) return false;
 const d = new Date();
 d.setMonth(d.getMonth() - 2);
 const date = d.toISOString().slice(0, 10) + ' ' + d.toTimeString().slice(0, 8);
@@ -50,34 +45,6 @@ const defaultLocalOptions: LocalOptions = {
 };
 
 const defaultOptions: Options = {...defaultLocalOptions, ...defaultSyncOptions};
-
-function parse(str: string): string[] {
-  return str.split(delimiter);
-}
-
-function getCache(cacheBase: unknown, customCacheHour: number): Cache {
-  if (typeof cacheBase !== 'string') return {};
-  let cache: Cache;
-  try {
-    cache = JSON.parse(cacheBase);
-  } catch (_) {
-    return {};
-  }
-  if (typeof cache !== 'object') return {};
-  const newCache: Cache = {};
-  Object.keys(cache).forEach((key) => {
-    const v = cache[key];
-    if (!v || typeof v.updated !== 'number' || typeof v.filter !== 'boolean') {
-      return;
-    }
-    if (customCacheHour < 0 ||
-      (new Date()).getTime() - v.updated < customCacheHour * 1000 * 60 * 60
-    ) {
-      newCache[key] = v;
-    }
-  });
-  return newCache;
-}
 
 export namespace Settings {
 
@@ -112,12 +79,12 @@ export namespace Settings {
       ngKeyword: parse(options.ngKeyword),
       useCustomFilter: options.useCustomFilter,
       saveCustomNgUser: options.saveCustomNgUser,
-      customFilter: options.customFilter,
+      customFilter: createCustomFilterBy(options.customFilter),
       customCache: getCache(options.customCache, options.customCacheHour),
     };
   }
 
-  export function saveCustomCache(cache: Cache): void {
+  export function saveCustomCache(cache: CustomCache): void {
     const customCache: string = JSON.stringify(cache as any);
     browser.storage.local.set({customCache}).then();
     load().then((options) => {
