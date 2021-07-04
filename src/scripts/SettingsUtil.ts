@@ -33,6 +33,11 @@ export function getCache(cacheBase: unknown, customCacheHour: number): CustomCac
   return newCache;
 }
 
+export function convertCacheToString(cache: CustomCache, base: string): string {
+  const customNg = [...Object.keys(cache)].filter((it) => cache[it]?.filter);
+  return [...new Set([...parse(base), ...customNg])].join(' ');
+}
+
 export function createCustomFilterBy(filterBase: string): CustomFilter {
   const AsyncFun = Object.getPrototypeOf(async () => {
   }).constructor;

@@ -1,4 +1,4 @@
-import {createCustomFilterBy, CustomCache, CustomFilter, getCache, parse} from './SettingsUtil';
+import {convertCacheToString, createCustomFilterBy, CustomCache, CustomFilter, getCache, parse} from './SettingsUtil';
 
 type SyncOptions = {
   ngUser: string,
@@ -6,9 +6,12 @@ type SyncOptions = {
   ngKeyword: string,
 };
 type LocalOptions = {
-  useCustomFilter: boolean;
+  useCustomNgUserFilter: boolean;
   saveCustomNgUser: boolean;
-  customFilter: string;
+  customNgUserFilter: string;
+  useCustomNgNovelFilter: boolean;
+  saveCustomNgNovel: boolean;
+  customNgNovelFilter: string;
   customCacheHour: number;
 };
 
@@ -18,11 +21,20 @@ export type ParsedOptions = {
   ngUser: string[],
   ngCode: string[],
   ngKeyword: string[],
-  useCustomFilter: boolean;
+  useCustomNgUserFilter: boolean;
   saveCustomNgUser: boolean;
-  customFilter: CustomFilter;
-  customCache: CustomCache;
+  customNgUserFilter: CustomFilter;
+  customNgUserCache: CustomCache;
+  useCustomNgNovelFilter: boolean;
+  saveCustomNgNovel: boolean;
+  customNgNovelFilter: CustomFilter;
+  customNgNovelCache: CustomCache;
 }
+
+type StringCaches = {
+  customNgUserCache: string;
+  customNgNovelCache: string;
+};
 
 const defaultFilter =
   `if (allcount < 2) return false;
@@ -38,9 +50,12 @@ const defaultSyncOptions: SyncOptions = {
 };
 
 const defaultLocalOptions: LocalOptions = {
-  useCustomFilter: false,
+  useCustomNgUserFilter: false,
   saveCustomNgUser: true,
-  customFilter: defaultFilter,
+  customNgUserFilter: defaultFilter,
+  useCustomNgNovelFilter: false,
+  saveCustomNgNovel: true,
+  customNgNovelFilter: defaultFilter,
   customCacheHour: -1,
 };
 
@@ -56,18 +71,25 @@ export namespace Settings {
       ngKeyword: options.ngKeyword,
     };
     const localOptions: LocalOptions = {
-      useCustomFilter: options.useCustomFilter,
+      useCustomNgUserFilter: options.useCustomNgUserFilter,
       saveCustomNgUser: options.saveCustomNgUser,
+      customNgUserFilter: options.customNgUserFilter,
+      useCustomNgNovelFilter: options.useCustomNgNovelFilter,
+      saveCustomNgNovel: options.saveCustomNgNovel,
+      customNgNovelFilter: options.customNgNovelFilter,
       customCacheHour: options.customCacheHour,
-      customFilter: options.customFilter,
     };
     await browser.storage.sync.set(syncOptions);
     await browser.storage.local.set(localOptions);
   }
 
-  export async function load(): Promise<Options & { customCache: string }> {
-    const syncOptions = await browser.storage.sync.get(defaultSyncOptions);
-    const localOptions = await browser.storage.local.get({...defaultLocalOptions, customCache: '{}'});
+  export async function load(): Promise<Options & StringCaches> {
+    const syncOptions: SyncOptions = await browser.storage.sync.get(defaultSyncOptions);
+    const localOptions: LocalOptions & StringCaches = await browser.storage.local.get({
+      ...defaultLocalOptions,
+      customNgUserCache: '{}',
+      customNgNovelCache: '{}',
+    });
     return {...localOptions, ...syncOptions};
   }
 
@@ -77,21 +99,36 @@ export namespace Settings {
       ngUser: parse(options.ngUser),
       ngCode: parse(options.ngCode),
       ngKeyword: parse(options.ngKeyword),
-      useCustomFilter: options.useCustomFilter,
+      useCustomNgUserFilter: options.useCustomNgUserFilter,
       saveCustomNgUser: options.saveCustomNgUser,
-      customFilter: createCustomFilterBy(options.customFilter),
-      customCache: getCache(options.customCache, options.customCacheHour),
+      customNgUserFilter: createCustomFilterBy(options.customNgUserFilter),
+      customNgUserCache: getCache(options.customNgUserCache, options.customCacheHour),
+      useCustomNgNovelFilter: options.useCustomNgNovelFilter,
+      saveCustomNgNovel: options.saveCustomNgNovel,
+      customNgNovelFilter: createCustomFilterBy(options.customNgNovelFilter),
+      customNgNovelCache: getCache(options.customNgNovelCache, options.customCacheHour),
     };
   }
 
-  export function saveCustomCache(cache: CustomCache): void {
-    const customCache: string = JSON.stringify(cache as any);
-    browser.storage.local.set({customCache}).then();
+  export function saveCustomCaches({
+    ngUserCache,
+    ngNovelCache,
+  }: { ngUserCache?: CustomCache, ngNovelCache?: CustomCache }): void {
+    if (!ngUserCache && !ngNovelCache) return;
+    const customCaches: Partial<StringCaches> = {};
+    if (ngUserCache) customCaches.customNgUserCache = JSON.stringify(ngUserCache as any);
+    if (ngNovelCache) customCaches.customNgNovelCache = JSON.stringify(ngNovelCache as any);
+    browser.storage.local.set(customCaches).then();
     load().then((options) => {
-      if (!options.saveCustomNgUser) return;
-      const customNg = [...Object.keys(cache)].filter((it) => cache[it]?.filter);
-      const ngUsers = [...new Set([...parse(options.ngUser), ...customNg])];
-      save({...options, ngUser: ngUsers.join(' ')}).then();
+      if (!options.saveCustomNgUser && !options.saveCustomNgNovel) return;
+      const saveObj = {...options};
+      if (options.saveCustomNgUser && ngUserCache) {
+        saveObj.ngUser = convertCacheToString(ngUserCache, options.ngUser);
+      }
+      if (options.saveCustomNgNovel && ngNovelCache) {
+        saveObj.ngCode = convertCacheToString(ngNovelCache, options.ngCode);
+      }
+      save(saveObj).then();
     });
   }
 
