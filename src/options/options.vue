@@ -5,14 +5,28 @@
   <input type="text" id="ngCode" v-model="ngCode" placeholder="カンマやスペース区切りのNコード">
   <label for="ngKeyword">NGキーワード</label>
   <input type="text" id="ngKeyword" v-model="ngKeyword" placeholder="カンマやスペース区切りのキーワード(完全一致)">
-  <label class="label-inline" for="useCustom">カスタムフィルターを使用する</label>
-  <input type="checkbox" id="useCustom" v-model="useCustomFilter">
-  <template v-if="useCustomFilter">
-    <label class="label-inline" for="saveCustom">フィルタ結果をNGユーザーに追加</label>
-    <input type="checkbox" id="saveCustom" v-model="saveCustomNgUser">
-    <label for="customFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
-    <textarea id="customFilter" v-model="customFilter"
-              placeholder="引数がuserId（ユーザーID）とncode（Nコード）の非同期関数"></textarea>
+
+  <label class="label-inline" for="useCustomNgUser">カスタムNGユーザーフィルターを使用する</label>
+  <input type="checkbox" id="useCustomNgUser" v-model="useCustomNgUserFilter">
+  <template v-if="useCustomNgUserFilter">
+    <label class="label-inline" for="saveCustomNgUser">フィルタ結果をNGユーザーに追加</label>
+    <input type="checkbox" id="saveCustomNgUser" v-model="saveCustomNgUser">
+    <label for="customNgUserFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
+    <textarea id="customNgUserFilter" v-model="customNgUserFilter"
+              placeholder="引数がuserId（ユーザーID）, ncode（Nコード）, allcount（総小説数）, data（小説情報の配列）の非同期関数"></textarea>
+  </template>
+  <br>
+  <label class="label-inline" for="useCustomNgNovel">カスタムNG小説フィルターを使用する</label>
+  <input type="checkbox" id="useCustomNgNovel" v-model="useCustomNgNovelFilter">
+  <template v-if="useCustomNgNovelFilter">
+    <label class="label-inline" for="saveCustomNgNovel">フィルタ結果をNG小説に追加</label>
+    <input type="checkbox" id="saveCustomNgNovel" v-model="saveCustomNgNovel">
+    <label for="customNgNovelFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
+    <textarea id="customNgNovelFilter" v-model="customNgNovelFilter"
+              placeholder="引数がuserId（ユーザーID）, ncode（Nコード）, allcount（総小説数）, data（小説情報の配列）の非同期関数"></textarea>
+  </template>
+  <br>
+  <template v-if="useCustomNgUserFilter||useCustomNgNovelFilter">
     <label for="cacheHour">カスタムキャッシュ保持時間</label>
     <input type="number" id="cacheHour" v-model.number="customCacheHour" placeholder="単位はh, 0でキャッシュなし, 負数で永続">
   </template>
@@ -36,9 +50,12 @@ export default defineComponent({
       ngUser: '',
       ngCode: '',
       ngKeyword: '',
-      useCustomFilter: false,
+      useCustomNgUserFilter: false,
       saveCustomNgUser: true,
-      customFilter: '',
+      customNgUserFilter: '',
+      useCustomNgNovelFilter: false,
+      saveCustomNgNovel: true,
+      customNgNovelFilter: '',
       customCacheHour: -1,
       loaded: false,
     };
@@ -90,9 +107,12 @@ export default defineComponent({
           ngUser: this.ngUser,
           ngCode: this.ngCode,
           ngKeyword: this.ngKeyword,
-          useCustomFilter: this.useCustomFilter,
+          useCustomNgUserFilter: this.useCustomNgUserFilter,
           saveCustomNgUser: this.saveCustomNgUser,
-          customFilter: this.customFilter,
+          customNgUserFilter: this.customNgUserFilter,
+          useCustomNgNovelFilter: this.useCustomNgNovelFilter,
+          saveCustomNgNovel: this.saveCustomNgNovel,
+          customNgNovelFilter: this.customNgNovelFilter,
           customCacheHour: this.customCacheHour,
         });
       },
@@ -100,9 +120,12 @@ export default defineComponent({
         this.ngUser = options.ngUser;
         this.ngCode = options.ngCode;
         this.ngKeyword = options.ngKeyword;
-        this.useCustomFilter = options.useCustomFilter;
+        this.useCustomNgUserFilter = options.useCustomNgUserFilter;
         this.saveCustomNgUser = options.saveCustomNgUser;
-        this.customFilter = options.customFilter;
+        this.customNgUserFilter = options.customNgUserFilter;
+        this.useCustomNgNovelFilter = options.useCustomNgNovelFilter;
+        this.saveCustomNgNovel = options.saveCustomNgNovel;
+        this.customNgNovelFilter = options.customNgNovelFilter;
         this.customCacheHour = options.customCacheHour;
       },
     },
