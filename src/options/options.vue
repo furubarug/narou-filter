@@ -8,11 +8,13 @@
 
   <custom-filter filter-use-label="カスタムNGユーザーフィルターを使用する" ng-save-label="フィルタ結果をNGユーザーに追加"
                  v-model:use-custom-ng-filter="useCustomNgUserFilter" v-model:save-custom-ng="saveCustomNgUser"
-                 v-model:custom-filter="customNgUserFilter"></custom-filter>
+                 v-model:custom-filter="customNgUserFilter" v-model:useSimpleFilter="useSimpleUserFilter"
+                 v-model:simpleFilter="simpleNgUserFilter"></custom-filter>
   <br>
   <custom-filter filter-use-label="カスタムNG小説フィルターを使用する" ng-save-label="フィルタ結果をNG小説に追加"
                  v-model:use-custom-ng-filter="useCustomNgNovelFilter" v-model:save-custom-ng="saveCustomNgNovel"
-                 v-model:custom-filter="customNgNovelFilter"></custom-filter>
+                 v-model:custom-filter="customNgNovelFilter"  v-model:useSimpleFilter="useSimpleNovelFilter"
+                 v-model:simpleFilter="simpleNgNovelFilter"></custom-filter>
   <br>
 
   <template v-if="useCustomNgUserFilter||useCustomNgNovelFilter">
@@ -44,9 +46,13 @@ export default defineComponent({
       useCustomNgUserFilter: false,
       saveCustomNgUser: true,
       customNgUserFilter: '',
+      useSimpleUserFilter: true,
+      simpleNgUserFilter: [],
       useCustomNgNovelFilter: false,
       saveCustomNgNovel: true,
       customNgNovelFilter: '',
+      useSimpleNovelFilter: true,
+      simpleNgNovelFilter: [],
       customCacheHour: -1,
       loaded: false,
     };
@@ -101,9 +107,13 @@ export default defineComponent({
           useCustomNgUserFilter: this.useCustomNgUserFilter,
           saveCustomNgUser: this.saveCustomNgUser,
           customNgUserFilter: this.customNgUserFilter,
+          useSimpleUserFilter: this.useSimpleUserFilter,
+          simpleNgUserFilter: this.simpleNgUserFilter,
           useCustomNgNovelFilter: this.useCustomNgNovelFilter,
           saveCustomNgNovel: this.saveCustomNgNovel,
           customNgNovelFilter: this.customNgNovelFilter,
+          useSimpleNovelFilter: this.useSimpleNovelFilter,
+          simpleNgNovelFilter: this.simpleNgNovelFilter,
           customCacheHour: this.customCacheHour,
         });
       },
@@ -114,9 +124,13 @@ export default defineComponent({
         this.useCustomNgUserFilter = options.useCustomNgUserFilter;
         this.saveCustomNgUser = options.saveCustomNgUser;
         this.customNgUserFilter = options.customNgUserFilter;
+        this.useSimpleUserFilter = options.useSimpleUserFilter;
+        this.simpleNgUserFilter = options.simpleNgUserFilter;
         this.useCustomNgNovelFilter = options.useCustomNgNovelFilter;
         this.saveCustomNgNovel = options.saveCustomNgNovel;
         this.customNgNovelFilter = options.customNgNovelFilter;
+        this.useSimpleNovelFilter = options.useSimpleNovelFilter;
+        this.simpleNgNovelFilter = options.simpleNgNovelFilter;
         this.customCacheHour = options.customCacheHour;
       },
     },

@@ -9,7 +9,7 @@ export type ApiNovelInfo = {
     9901 | 9902 | 9903 | 9904 | 9999 | 9801,
   keyword: string,
   ['general_firstup']: string,
-  ['general_firstup']: string,
+  ['general_lastup']: string,
   ['novel_type']: 1 | 2, // 連載1, 短編2
   end: 0 | 1, // 短編小説・完結済小説0, 連載中1
   ['general_all_no']: number,

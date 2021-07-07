@@ -1,4 +1,14 @@
-import {convertCacheToString, createCustomFilterBy, CustomCache, CustomFilter, getCache, parse} from './SettingsUtil';
+import {
+  cleanSimpleFilter,
+  convertCacheToString,
+  createCustomFilterBy,
+  createSimpleFilterBy,
+  CustomCache,
+  CustomFilter,
+  getCache,
+  parse,
+  SimpleFilter,
+} from './SettingsUtil';
 
 type SyncOptions = {
   ngUser: string,
@@ -9,9 +19,13 @@ type LocalOptions = {
   useCustomNgUserFilter: boolean;
   saveCustomNgUser: boolean;
   customNgUserFilter: string;
+  useSimpleUserFilter: boolean;
+  simpleNgUserFilter: SimpleFilter[];
   useCustomNgNovelFilter: boolean;
   saveCustomNgNovel: boolean;
   customNgNovelFilter: string;
+  useSimpleNovelFilter: boolean;
+  simpleNgNovelFilter: SimpleFilter[];
   customCacheHour: number;
 };
 
@@ -53,9 +67,13 @@ const defaultLocalOptions: LocalOptions = {
   useCustomNgUserFilter: false,
   saveCustomNgUser: true,
   customNgUserFilter: defaultFilter,
+  useSimpleUserFilter: true,
+  simpleNgUserFilter: [],
   useCustomNgNovelFilter: false,
   saveCustomNgNovel: true,
   customNgNovelFilter: defaultFilter,
+  useSimpleNovelFilter: true,
+  simpleNgNovelFilter: [],
   customCacheHour: -1,
 };
 
@@ -74,9 +92,13 @@ export namespace Settings {
       useCustomNgUserFilter: options.useCustomNgUserFilter,
       saveCustomNgUser: options.saveCustomNgUser,
       customNgUserFilter: options.customNgUserFilter,
+      useSimpleUserFilter: options.useSimpleUserFilter,
+      simpleNgUserFilter: cleanSimpleFilter(options.simpleNgUserFilter),
       useCustomNgNovelFilter: options.useCustomNgNovelFilter,
       saveCustomNgNovel: options.saveCustomNgNovel,
       customNgNovelFilter: options.customNgNovelFilter,
+      useSimpleNovelFilter: options.useSimpleNovelFilter,
+      simpleNgNovelFilter: cleanSimpleFilter(options.simpleNgNovelFilter),
       customCacheHour: options.customCacheHour,
     };
     await browser.storage.sync.set(syncOptions);
@@ -101,11 +123,13 @@ export namespace Settings {
       ngKeyword: parse(options.ngKeyword),
       useCustomNgUserFilter: options.useCustomNgUserFilter,
       saveCustomNgUser: options.saveCustomNgUser,
-      customNgUserFilter: createCustomFilterBy(options.customNgUserFilter),
+      customNgUserFilter: options.useSimpleUserFilter ?
+        createSimpleFilterBy(options.simpleNgUserFilter) : createCustomFilterBy(options.customNgUserFilter),
       customNgUserCache: getCache(options.customNgUserCache, options.customCacheHour),
       useCustomNgNovelFilter: options.useCustomNgNovelFilter,
       saveCustomNgNovel: options.saveCustomNgNovel,
-      customNgNovelFilter: createCustomFilterBy(options.customNgNovelFilter),
+      customNgNovelFilter: options.useSimpleNovelFilter ?
+        createSimpleFilterBy(options.simpleNgNovelFilter) : createCustomFilterBy(options.customNgNovelFilter),
       customNgNovelCache: getCache(options.customNgNovelCache, options.customCacheHour),
     };
   }
