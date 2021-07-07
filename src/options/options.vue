@@ -6,26 +6,17 @@
   <label for="ngKeyword">NGキーワード</label>
   <input type="text" id="ngKeyword" v-model="ngKeyword" placeholder="カンマやスペース区切りのキーワード(完全一致)">
 
-  <label class="label-inline" for="useCustomNgUser">カスタムNGユーザーフィルターを使用する</label>
-  <input type="checkbox" id="useCustomNgUser" v-model="useCustomNgUserFilter">
-  <template v-if="useCustomNgUserFilter">
-    <label class="label-inline" for="saveCustomNgUser">フィルタ結果をNGユーザーに追加</label>
-    <input type="checkbox" id="saveCustomNgUser" v-model="saveCustomNgUser">
-    <label for="customNgUserFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
-    <textarea id="customNgUserFilter" v-model="customNgUserFilter"
-              placeholder="引数がuserId（ユーザーID）, ncode（Nコード）, allcount（総小説数）, data（小説情報の配列）の非同期関数"></textarea>
-  </template>
+  <custom-filter filter-use-label="カスタムNGユーザーフィルターを使用する" ng-save-label="フィルタ結果をNGユーザーに追加"
+                 v-model:use-custom-ng-filter="useCustomNgUserFilter" v-model:save-custom-ng="saveCustomNgUser"
+                 v-model:custom-filter="customNgUserFilter" v-model:useSimpleFilter="useSimpleUserFilter"
+                 v-model:simpleFilter="simpleNgUserFilter"></custom-filter>
   <br>
-  <label class="label-inline" for="useCustomNgNovel">カスタムNG小説フィルターを使用する</label>
-  <input type="checkbox" id="useCustomNgNovel" v-model="useCustomNgNovelFilter">
-  <template v-if="useCustomNgNovelFilter">
-    <label class="label-inline" for="saveCustomNgNovel">フィルタ結果をNG小説に追加</label>
-    <input type="checkbox" id="saveCustomNgNovel" v-model="saveCustomNgNovel">
-    <label for="customNgNovelFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
-    <textarea id="customNgNovelFilter" v-model="customNgNovelFilter"
-              placeholder="引数がuserId（ユーザーID）, ncode（Nコード）, allcount（総小説数）, data（小説情報の配列）の非同期関数"></textarea>
-  </template>
+  <custom-filter filter-use-label="カスタムNG小説フィルターを使用する" ng-save-label="フィルタ結果をNG小説に追加"
+                 v-model:use-custom-ng-filter="useCustomNgNovelFilter" v-model:save-custom-ng="saveCustomNgNovel"
+                 v-model:custom-filter="customNgNovelFilter"  v-model:useSimpleFilter="useSimpleNovelFilter"
+                 v-model:simpleFilter="simpleNgNovelFilter"></custom-filter>
   <br>
+
   <template v-if="useCustomNgUserFilter||useCustomNgNovelFilter">
     <label for="cacheHour">カスタムキャッシュ保持時間</label>
     <input type="number" id="cacheHour" v-model.number="customCacheHour" placeholder="単位はh, 0でキャッシュなし, 負数で永続">
@@ -42,9 +33,11 @@
 
 <script lang="ts">
 import {Options, Settings} from '../scripts/Settings';
+import CustomFilter from './custom-filter.vue';
 import {defineComponent} from 'vue';
 
 export default defineComponent({
+  components: {CustomFilter},
   data(): Options & { loaded: boolean } {
     return {
       ngUser: '',
@@ -53,9 +46,13 @@ export default defineComponent({
       useCustomNgUserFilter: false,
       saveCustomNgUser: true,
       customNgUserFilter: '',
+      useSimpleUserFilter: true,
+      simpleNgUserFilter: [],
       useCustomNgNovelFilter: false,
       saveCustomNgNovel: true,
       customNgNovelFilter: '',
+      useSimpleNovelFilter: true,
+      simpleNgNovelFilter: [],
       customCacheHour: -1,
       loaded: false,
     };
@@ -110,9 +107,13 @@ export default defineComponent({
           useCustomNgUserFilter: this.useCustomNgUserFilter,
           saveCustomNgUser: this.saveCustomNgUser,
           customNgUserFilter: this.customNgUserFilter,
+          useSimpleUserFilter: this.useSimpleUserFilter,
+          simpleNgUserFilter: this.simpleNgUserFilter,
           useCustomNgNovelFilter: this.useCustomNgNovelFilter,
           saveCustomNgNovel: this.saveCustomNgNovel,
           customNgNovelFilter: this.customNgNovelFilter,
+          useSimpleNovelFilter: this.useSimpleNovelFilter,
+          simpleNgNovelFilter: this.simpleNgNovelFilter,
           customCacheHour: this.customCacheHour,
         });
       },
@@ -123,9 +124,13 @@ export default defineComponent({
         this.useCustomNgUserFilter = options.useCustomNgUserFilter;
         this.saveCustomNgUser = options.saveCustomNgUser;
         this.customNgUserFilter = options.customNgUserFilter;
+        this.useSimpleUserFilter = options.useSimpleUserFilter;
+        this.simpleNgUserFilter = options.simpleNgUserFilter;
         this.useCustomNgNovelFilter = options.useCustomNgNovelFilter;
         this.saveCustomNgNovel = options.saveCustomNgNovel;
         this.customNgNovelFilter = options.customNgNovelFilter;
+        this.useSimpleNovelFilter = options.useSimpleNovelFilter;
+        this.simpleNgNovelFilter = options.simpleNgNovelFilter;
         this.customCacheHour = options.customCacheHour;
       },
     },
