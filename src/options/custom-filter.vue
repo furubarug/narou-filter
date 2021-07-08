@@ -1,48 +1,64 @@
 <template>
-  <label class="label-inline" for="useCustomNgUser">{{ filterUseLabel }}</label>
-  <input type="checkbox" id="useCustomNgUser" v-model="useCustomNgFilterComputed">
+  <label class="checkbox">{{ filterUseLabel }}
+    <input type="checkbox" class="checkbox" v-model="useCustomNgFilterComputed">
+  </label>
   <template v-if="useCustomNgFilterComputed">
-    <label class="label-inline" for="saveCustomNgUser">{{ ngSaveLabel }}</label>
-    <input type="checkbox" id="saveCustomNgUser" v-model="saveCustomNgComputed">
-
-    <select v-model="useSimpleFilterComputed">
-      <option v-bind:value="true">簡易フィルター</option>
-      <option v-bind:value="false">カスタムフィルター</option>
-    </select>
+    <label class="checkbox">{{ ngSaveLabel }}
+      <input type="checkbox" v-model="saveCustomNgComputed">
+    </label>
+    <br>
+    <div class="select is-small">
+      <select v-model="useSimpleFilterComputed">
+        <option v-bind:value="true">簡易フィルター</option>
+        <option v-bind:value="false">カスタムフィルター</option>
+      </select>
+    </div>
 
     <template v-if="useSimpleFilterComputed">
-      <label>簡易フィルター（各数値は https://dev.syosetu.com/man/api/ を参照）</label>
-      <pre><code>
-      <template v-for="(obj, index) in simpleFilterComputed">
-        <span class="float-left">
-          <button type="button" class="button button-clear" v-on:click="remove(index)">-</button>
-          <select v-model="obj.novelType" style="width: auto">
-            <option v-for="item in novelTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
-          </select>
-          の
-          <select v-model="obj.targetType" style="width: auto">
-            <option v-for="item in targetTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
-          </select>
-          <template v-if="obj.novelType!=='this'">
+      （各数値は https://dev.syosetu.com/man/api/ を参照）<br><br>
+
+      <nav class="panel">
+        <template v-for="(obj, index) in simpleFilterComputed">
+          <div class="panel-block">
+            <button type="button" class="button is-danger is-outlined is-small" v-on:click="remove(index)">×</button>
+            <div class="select is-small">
+              <select v-model="obj.novelType">
+                <option v-for="item in novelTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+              </select>
+            </div>
             の
-            <select v-model="obj.calcType" style="width: auto">
-              <option v-for="item in calcTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
-            </select>
-          </template>
-          が
-          <input type="text" v-model="obj.value"  style="width: auto">
-          <select v-model="obj.compType" style="width: auto">
-            <option v-for="item in compTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
-          </select>
-        </span>
-      </template>
-      </code></pre>
-      <button type="button" class="button button-outline" v-on:click="add()">+</button>
+            <div class="select is-small">
+              <select v-model="obj.targetType">
+                <option v-for="item in targetTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+              </select>
+            </div>
+            <template v-if="obj.novelType!=='this'">
+              の
+              <div class="select is-small">
+                <select v-model="obj.calcType">
+                  <option v-for="item in calcTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+                </select>
+              </div>
+            </template>
+            が
+            <input type="text" class="input is-small" style="width: 100px" v-model="obj.value">
+            <div class="select is-small">
+              <select v-model="obj.compType">
+                <option v-for="item in compTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+              </select>
+            </div>
+          </div>
+        </template>
+
+        <div class="panel-block">
+          <button type="button" class="button is-light is-rounded is-small" v-on:click="add()">+</button>
+        </div>
+      </nav>
     </template>
 
     <template v-else>
-      <label for="customNgUserFilter">カスタムフィルター（jsによるフィルター。戻り値trueでフィルタする。）</label>
-      <textarea id="customNgUserFilter" v-model="customFilterComputed"
+      （jsによるフィルター。戻り値trueでフィルタする。）<br>
+      <textarea class="textarea" v-model="customFilterComputed"
                 placeholder="引数がuserId（ユーザーID）, ncode（Nコード）, allcount（総小説数）, data（小説情報の配列）の非同期関数">
       </textarea>
     </template>

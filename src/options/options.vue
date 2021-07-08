@@ -1,10 +1,22 @@
 <template v-if="loaded">
-  <label for="ngUser">NGユーザーID</label>
-  <input type="text" id="ngUser" v-model="ngUser" placeholder="カンマやスペース区切りのユーザーID">
-  <label for="ngCode">NG小説Nコード</label>
-  <input type="text" id="ngCode" v-model="ngCode" placeholder="カンマやスペース区切りのNコード">
-  <label for="ngKeyword">NGキーワード</label>
-  <input type="text" id="ngKeyword" v-model="ngKeyword" placeholder="カンマやスペース区切りのキーワード(完全一致)">
+  <div class="field">
+    <label class="label">NGユーザーID</label>
+    <div class="control">
+      <input type="text" class="input" v-model="ngUser" placeholder="カンマやスペース区切りのユーザーID">
+    </div>
+  </div>
+  <div class="field">
+    <label class="label">NG小説Nコード</label>
+    <div class="control">
+      <input type="text" class="input" v-model="ngCode" placeholder="カンマやスペース区切りのNコード">
+    </div>
+  </div>
+  <div class="field">
+    <label class="label">NGキーワード</label>
+    <div class="control">
+      <input type="text" class="input" v-model="ngKeyword" placeholder="カンマやスペース区切りのキーワード(完全一致)">
+    </div>
+  </div>
 
   <custom-filter filter-use-label="カスタムNGユーザーフィルターを使用する" ng-save-label="フィルタ結果をNGユーザーに追加"
                  v-model:use-custom-ng-filter="useCustomNgUserFilter" v-model:save-custom-ng="saveCustomNgUser"
@@ -13,21 +25,38 @@
   <br>
   <custom-filter filter-use-label="カスタムNG小説フィルターを使用する" ng-save-label="フィルタ結果をNG小説に追加"
                  v-model:use-custom-ng-filter="useCustomNgNovelFilter" v-model:save-custom-ng="saveCustomNgNovel"
-                 v-model:custom-filter="customNgNovelFilter"  v-model:useSimpleFilter="useSimpleNovelFilter"
+                 v-model:custom-filter="customNgNovelFilter" v-model:useSimpleFilter="useSimpleNovelFilter"
                  v-model:simpleFilter="simpleNgNovelFilter"></custom-filter>
   <br>
 
   <template v-if="useCustomNgUserFilter||useCustomNgNovelFilter">
-    <label for="cacheHour">カスタムキャッシュ保持時間</label>
-    <input type="number" id="cacheHour" v-model.number="customCacheHour" placeholder="単位はh, 0でキャッシュなし, 負数で永続">
+    <div class="field">
+      <label class="label">カスタムキャッシュ保持時間</label>
+      <div class="control">
+        <input type="number" class="input" v-model.number="customCacheHour" placeholder="単位はh, 0でキャッシュなし, 負数で永続">
+      </div>
+    </div>
   </template>
   <br>
-  <button type="button" class="button button-outline" v-on:click="reset">Reset</button>
-  <button type="button" class="button" v-on:click="save">Save</button>
-  <div class="float-right">
-    <input type="file" ref="file" style="display: none" v-on:change="importOptions">
-    <button type="button" class="button button-clear" v-on:click="$refs.file.click">import</button>
-    <button type="button" class="button button-clear" v-on:click="exportOptions">export</button>
+
+  <div style="display: flex; justify-content: space-between">
+    <div class="field is-grouped">
+      <div class="control">
+        <button type="button" class="button is-link" v-on:click="save">Save</button>
+      </div>
+      <div class="control">
+        <button type="button" class="button is-link is-light" v-on:click="reset">Reset</button>
+      </div>
+    </div>
+    <div class="field is-grouped">
+      <input type="file" ref="file" style="display: none" v-on:change="importOptions">
+      <div class="control">
+        <button type="button" class="button" v-on:click="$refs.file.click">import</button>
+      </div>
+      <div class="control">
+        <button type="button" class="button" v-on:click="exportOptions">export</button>
+      </div>
+    </div>
   </div>
 </template>
 
