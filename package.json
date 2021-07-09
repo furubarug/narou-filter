@@ -3,11 +3,12 @@
   "version": "1.1.0",
   "description": "Firefox addon for narou",
   "scripts": {
-    "build": "cpx src/**/*.{html,png} dist && cpx manifest.json dist && cpx node_modules/bulma/css/bulma.min.css dist/options && parcel build src/**/*.ts --no-source-maps",
+    "build": "cpx src/main/**/*.{html,png} dist && cpx manifest.json dist && cpx node_modules/bulma/css/bulma.min.css dist/options && parcel build src/main/**/*.ts --no-source-maps",
     "clean": "rimraf dist",
     "zip": "web-ext build",
     "start": "web-ext run",
-    "lint": "eslint --fix src/**/*.ts"
+    "lint": "eslint --fix src/**/*.ts",
+    "test": "jest"
   },
   "author": "furubarug",
   "license": "MIT",
@@ -21,6 +22,7 @@
     "cpx": "^1.5.0",
     "eslint": "^7.28.0",
     "eslint-config-google": "^0.14.0",
+    "jest": "^27.0.6",
     "parcel": "^2.0.0-beta.3.1",
     "typescript": "^4.3.2",
     "vue": "^3.1.2",
