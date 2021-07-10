@@ -15,7 +15,7 @@ export type SimpleFilter = {
 const delimiter = /[\s,.|:;]+/;
 
 export function parse(str: string): string[] {
-  return str.split(delimiter);
+  return str.split(delimiter).filter((it) => it);
 }
 
 export function getCache(cacheBase: unknown, customCacheHour: number): CustomCache {
@@ -61,81 +61,138 @@ export function cleanSimpleFilter(filter: SimpleFilter[]): SimpleFilter[] {
 }
 
 export function createCustomFilterBy(filterBase: string): CustomFilter {
-  const filter: CustomFilter | any = new AsyncFun('userId', 'ncode', 'allcount', 'data', filterBase);
-  return async function(userId: string, ncode: string, allcount: number, data: ApiNovelInfo[]): Promise<boolean> {
-    try {
-      return await filter(userId, ncode, allcount, data) === true;
-    } catch (e) {
-      console.error(e);
-      return false;
-    }
-  };
+  try {
+    const filter: CustomFilter | any = new AsyncFun('userId', 'ncode', 'allcount', 'data', filterBase);
+    return async function(userId: string, ncode: string, allcount: number, data: ApiNovelInfo[]): Promise<boolean> {
+      try {
+        return await filter(userId, ncode, allcount, data) === true;
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
+    };
+  } catch (e) {
+    console.error(e);
+    return async (userId: string, ncode: string, allcount: number, data: ApiNovelInfo[]) => false;
+  }
 }
 
 export function createSimpleFilterBy(filterBase: SimpleFilter[]): CustomFilter {
   return async function(userId: string, ncode: string, allcount: number, data: ApiNovelInfo[]): Promise<boolean> {
     if (filterBase.length === 0) return false;
-    const novel = data.filter((it) => it.ncode.toLowerCase() === ncode);
-    if (novel.length === 0) {
-      console.error(ncode);
-      console.error(data);
+    const novels = convertBasedOnNovelType(ncode, data);
+    if (Object.values(novels).some((it) => it.length === 0)) {
+      console.error(ncode, data);
+      return false;
     }
-    const normal = data.filter((it) => it['novel_type'] === 1);
-    const short = data.filter((it) => it['novel_type'] === 2);
+    const nowDateNumber = dateToNum(new Date());
     return filterBase.every((filterObj) => {
-      const mappedTarget = (() => {
-        switch (filterObj.novelType) {
-          case 'this':
-            return novel;
-          case 'normal':
-            return normal;
-          case 'short':
-            return short;
-          default:
-            return data;
-        }
-      })().map((it) => it[filterObj.targetType]);
-      if (mappedTarget.length === 0) return false;
-      const isDateAndNumber = typeof mappedTarget[0] !== 'number' && filterObj.value.match(/^\d*$/);
-      const value: number = typeof mappedTarget[0] === 'number' || isDateAndNumber ?
-        Number(filterObj.value) : new Date(filterObj.value).getTime();
-      if (Number.isNaN(value)) return false;
-      const target = mappedTarget.map((it) => typeof it === 'number' ? it : new Date(it).getTime());
-      if (target.some((it) => Number.isNaN(it))) return false;
+      const filteredData = novels[filterObj.novelType];
+      if (filteredData.length === 0) return false;
+      const targetType = getTypeOrNull(filteredData[0][filterObj.targetType]);
+      const valueType = getTypeOrNull(filterObj.value);
 
-      const nowTime = new Date().getTime();
-      const validate: (n: number) => boolean = (n: number) => {
-        const num = isDateAndNumber ? Math.floor(Math.abs(nowTime - n) / (24 * 60 * 60 * 1000)) : n;
-        switch (filterObj.compType) {
-          case 'equal':
-            return num === value;
-          case 'not':
-            return num !== value;
-          case 'higher':
-            return num > value;
-          case 'lower':
-            return num < value;
-          default:
-            return false;
-        }
-      };
-      switch (filterObj.calcType) {
-        case 'avg':
-          if (validate(target.reduce((a, c) => a + c, 0.0) / target.length)) return true;
-          break;
-        case 'sum':
-          if (validate(target.reduce((a, c) => a + c, 0.0))) return true;
-          break;
-        case 'every':
-          if (target.every((it) => validate(it))) return true;
-          break;
-        case 'some':
-          if (target.some((it) => validate(it))) return true;
-          break;
-        default:
-          break;
+      if (targetType === 'num' && valueType === 'num') {
+        const v = Number(filterObj.value);
+        if (Number.isNaN(v)) return false;
+        const targets = filteredData.map((it) => it[filterObj.targetType]);
+        if (targets.some((it) => typeof it !== 'number')) return false;
+        const f = createValidatorByComType(v, filterObj.compType);
+        if (f == null) return false;
+        return calcByCalcType(targets as number[], filterObj.calcType, f);
+      } else if (targetType === 'date' && valueType === 'date') {
+        const d = new Date(filterObj.value);
+        if (Number.isNaN(d.getTime())) return false;
+        const v = dateToNum(d);
+        const targets = convertToDateNumsOrNullByTargetType(filteredData, filterObj.targetType);
+        if (!targets) return false;
+        const f = createValidatorByComType(v, filterObj.compType);
+        if (f == null) return false;
+        return calcByCalcType(targets, filterObj.calcType, f);
+      } else if (targetType === 'date' && valueType === 'num') {
+        const v = Number(filterObj.value);
+        if (Number.isNaN(v)) return false;
+        const targets = convertToDateNumsOrNullByTargetType(filteredData, filterObj.targetType)
+            ?.map((it) => Math.abs(it - nowDateNumber));
+        if (!targets) return false;
+        const f = createValidatorByComType(v, filterObj.compType);
+        if (f == null) return false;
+        return calcByCalcType(targets, filterObj.calcType, f);
       }
       return false;
     });
   };
+}
+
+export function convertBasedOnNovelType(ncode: string, data: ApiNovelInfo[])
+  : Record<SimpleFilter['novelType'], ApiNovelInfo[]> {
+  return {
+    this: data.filter((it) => it.ncode.toLowerCase() == ncode.toLowerCase()),
+    normal: data.filter((it) => it['novel_type'] === 1),
+    short: data.filter((it) => it['novel_type'] === 2),
+    all: data,
+  };
+}
+
+export function getTypeOrNull(target: unknown): 'num' | 'date' | null {
+  if (typeof target === 'number') return 'num';
+  if (typeof target !== 'string') return null;
+  if (!Number.isNaN(Number(target))) return 'num';
+  return Number.isNaN(new Date(target).getTime()) ? null : 'date';
+}
+
+export function dateToNum(date: Date): number {
+  return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+}
+
+export function convertToDateNumsOrNullByTargetType(data: ApiNovelInfo[], type: SimpleFilter['targetType'])
+  : number[] | null {
+  let isValid = true;
+  const v: number[] = data.map((it) => {
+    if (!isValid) return 0;
+    const s = it[type];
+    if (typeof s !== 'string') {
+      isValid = false;
+      return 0;
+    }
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) {
+      isValid = false;
+      return 0;
+    }
+    return dateToNum(d);
+  });
+  return isValid ? v : null;
+}
+
+export function createValidatorByComType(value: number, type: SimpleFilter['compType'])
+  : ((n: number) => boolean) | null {
+  switch (type) {
+    case 'equal':
+      return (n: number) => n === value;
+    case 'not':
+      return (n: number) => n !== value;
+    case 'higher':
+      return (n: number) => n > value;
+    case 'lower':
+      return (n: number) => n < value;
+    default:
+      return null;
+  }
+}
+
+export function calcByCalcType(target: number[], type: SimpleFilter['calcType'], validator
+  : (n: number) => boolean): boolean {
+  switch (type) {
+    case 'avg':
+      return validator(target.reduce((a, c) => a + c, 0.0) / target.length);
+    case 'sum':
+      return validator(target.reduce((a, c) => a + c, 0.0));
+    case 'every':
+      return target.every((it) => validator(it));
+    case 'some':
+      return target.some((it) => validator(it));
+    default:
+      return false;
+  }
 }
