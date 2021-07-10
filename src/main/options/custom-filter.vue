@@ -81,8 +81,8 @@ export default defineComponent({
     return {
       novelTypeLabel: [
         {value: 'this', label: '小説'},
-        {value: 'normal', label: '作者の長編'},
-        {value: 'short', label: '作者の短編'},
+        {value: 'normal', label: '作者の全長編'},
+        {value: 'short', label: '作者の全短編'},
         {value: 'all', label: '作者の全小説'},
       ],
       targetTypeLabel: [
