@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "narou-filter",
   "description": "なろうの小説をフィルターする",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "homepage_url": "https://github.com/furubarug/narou-filter",
   "icons": {
     "32": "icons/icon32.png",

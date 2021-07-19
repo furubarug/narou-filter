@@ -27,10 +27,14 @@ test('convertCacheToString', () => {
 test('cleanSimpleFilter', () => {
   const obj: SimpleFilter = {
     novelType: 'normal',
-    targetType: 'general_firstup',
-    calcType: 'avg',
-    value: 'hogehoge',
-    compType: 'higher',
+    conditions: [
+      {
+        targetType: 'general_firstup',
+        calcType: 'avg',
+        value: 'hogehoge',
+        compType: 'higher',
+      },
+    ],
   };
   const expected = Array(5).fill({}).map(() => ({...obj}));
   const testTarget = expected.map((it) => ({...it, hoge: 0, fuga: '', piyo: {}}));
@@ -57,28 +61,24 @@ test('createSimpleFilterBy: target: number, value: number', async () => {
     {ncode: 'ncode', ['novel_type']: 2, ['all_point']: 5},
     {ncode: 'ncode', ['novel_type']: 2, ['all_point']: 7},
   ];
-  const filterCommon: { novelType: 'short', targetType: 'all_point' } = {
-    novelType: 'short',
-    targetType: 'all_point',
-  };
   expect(await createSimpleFilterBy(
       [{
-        ...filterCommon,
-        calcType: 'sum', value: '15', compType: 'equal',
+        novelType: 'short',
+        conditions: [{targetType: 'all_point', calcType: 'sum', value: '15', compType: 'equal'}],
       }],
   )('', 'ncode', testData.length, testData as any),
   ).toBe(true);
   expect(await createSimpleFilterBy(
       [{
-        ...filterCommon,
-        calcType: 'avg', value: '5', compType: 'equal',
+        novelType: 'short',
+        conditions: [{targetType: 'all_point', calcType: 'avg', value: '5', compType: 'equal'}],
       }],
   )('', 'ncode', testData.length, testData as any),
   ).toBe(true);
 });
 
 test('createSimpleFilterBy: target: date, value: number', async () => {
-  const dateToString = (d: Date) => d.toISOString().slice(0, 10);
+  const dateToString = (d: Date) => `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -90,22 +90,17 @@ test('createSimpleFilterBy: target: date, value: number', async () => {
     {ncode: 'ncode', ['novel_type']: 2, ['general_firstup']: dateToString(yesterday)},
     {ncode: 'ncode', ['novel_type']: 2, ['general_firstup']: dateToString(tomorrow)},
   ];
-  const filterCommon: { novelType: 'all', targetType: 'general_firstup' } = {
-    novelType: 'all',
-    targetType: 'general_firstup',
-  };
-
   expect(await createSimpleFilterBy(
       [{
-        ...filterCommon,
-        calcType: 'every', value: '2', compType: 'lower',
+        novelType: 'all',
+        conditions: [{targetType: 'general_firstup', calcType: 'every', value: '2', compType: 'lower'}],
       }],
   )('', 'ncode', testData.length, testData as any),
   ).toBe(true);
   expect(await createSimpleFilterBy(
       [{
-        ...filterCommon,
-        calcType: 'every', value: '1', compType: 'lower',
+        novelType: 'all',
+        conditions: [{targetType: 'general_firstup', calcType: 'every', value: '1', compType: 'lower'}],
       }],
   )('', 'ncode', testData.length, testData as any),
   ).toBe(false);
@@ -117,35 +112,31 @@ test('createSimpleFilterBy: target: date, value: date', async () => {
     {ncode: 'ncode', ['novel_type']: 2, ['novelupdated_at']: '2000-1-2 12:30'},
     {ncode: 'ncode', ['novel_type']: 2, ['novelupdated_at']: '1999-12-31'},
   ];
-  const filterCommon: { novelType: 'all', targetType: 'novelupdated_at' } = {
-    novelType: 'all',
-    targetType: 'novelupdated_at',
-  };
   expect(await createSimpleFilterBy(
       [{
-        ...filterCommon,
-        calcType: 'some', value: '2000/1/2 0:05', compType: 'equal',
+        novelType: 'all',
+        conditions: [{targetType: 'novelupdated_at', calcType: 'some', value: '2000/1/2 0:05', compType: 'equal'}],
       }],
   )('', 'ncode', testData.length, testData as any),
   ).toBe(true);
   expect(await createSimpleFilterBy(
       [{
-        ...filterCommon,
-        calcType: 'every', value: '2000/1/3', compType: 'lower',
+        novelType: 'all',
+        conditions: [{targetType: 'novelupdated_at', calcType: 'every', value: '2000/1/3', compType: 'lower'}],
       }],
   )('', 'ncode', testData.length, testData as any),
   ).toBe(true);
   expect(await createSimpleFilterBy(
       [{
-        ...filterCommon,
-        calcType: 'every', value: '1999/12/30', compType: 'higher',
+        novelType: 'all',
+        conditions: [{targetType: 'novelupdated_at', calcType: 'every', value: '1999/12/30', compType: 'higher'}],
       }],
   )('', 'ncode', testData.length, testData as any),
   ).toBe(true);
 });
 
-test('createSimpleFilterBy: error', async () => {
-  // TODO
+test('createSimpleFilterBy', async () => {
+  // TODO エラー条件, 条件のAND, フィルターのOR
 });
 
 test('convertBasedOnNovelType', () => {

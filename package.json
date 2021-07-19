@@ -1,6 +1,6 @@
 {
   "name": "narou-filter",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Firefox addon for narou",
   "scripts": {
     "build": "cpx src/main/**/*.{html,png} dist && cpx manifest.json dist && cpx node_modules/bulma/css/bulma.min.css dist/options && parcel build src/main/**/*.ts --no-source-maps",
