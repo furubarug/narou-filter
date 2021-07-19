@@ -3,7 +3,11 @@ import {ApiNovelInfo} from './NarouAPI';
 export type CustomCache = Record<string, undefined | { updated?: number, filter?: boolean }>;
 export type CustomFilter = (userId: string, ncode: string, allcount: number, data: ApiNovelInfo[]) => Promise<boolean>;
 export type SimpleFilter = {
-  novelType: 'this' | 'normal' | 'short' | 'all', // 小説, 作者の長編, 作者の短編, 作者の小説
+  novelType: 'it' | 'all', // 小説, 作者の長編, 作者の短編, 作者の小説
+  filters: Omit<SimpleFilterCondition, 'calcType'>[],
+  conditions: SimpleFilterCondition[],
+};
+export type SimpleFilterCondition = {
   targetType: 'biggenre' | 'genre' | 'general_firstup' | 'general_lastup' | 'novel_type' | 'end' |
     'general_all_no' | 'length' | 'isstop' | 'fav_novel_cnt' | 'impression_cnt' | 'review_cnt' |
     'all_point' | 'all_hyoka_cnt' | 'novelupdated_at',
@@ -51,12 +55,19 @@ const AsyncFun = Object.getPrototypeOf(async () => {
 }).constructor;
 
 export function cleanSimpleFilter(filter: SimpleFilter[]): SimpleFilter[] {
-  return filter.map((it) => ({
-    novelType: it.novelType,
-    targetType: it.targetType,
-    calcType: it.calcType,
-    value: it.value,
-    compType: it.compType,
+  return filter.map((obj) => ({
+    novelType: obj.novelType,
+    filters: obj.novelType === 'it' ? [] : obj.filters.map((it) => ({
+      targetType: it.targetType,
+      value: it.value,
+      compType: it.compType,
+    })),
+    conditions: obj.conditions.map((it) => ({
+      targetType: it.targetType,
+      calcType: it.calcType,
+      value: it.value,
+      compType: it.compType,
+    })),
   }));
 }
 
@@ -80,57 +91,22 @@ export function createCustomFilterBy(filterBase: string): CustomFilter {
 export function createSimpleFilterBy(filterBase: SimpleFilter[]): CustomFilter {
   return async function(userId: string, ncode: string, allcount: number, data: ApiNovelInfo[]): Promise<boolean> {
     if (filterBase.length === 0) return false;
-    const novels = convertBasedOnNovelType(ncode, data);
-    if (Object.values(novels).some((it) => it.length === 0)) {
-      console.error(ncode, data);
-      return false;
-    }
-    const nowDateNumber = dateToNum(new Date());
-    return filterBase.every((filterObj) => {
-      const filteredData = novels[filterObj.novelType];
-      if (filteredData.length === 0) return false;
-      const targetType = getTypeOrNull(filteredData[0][filterObj.targetType]);
-      const valueType = getTypeOrNull(filterObj.value);
-
-      if (targetType === 'num' && valueType === 'num') {
-        const v = Number(filterObj.value);
-        if (Number.isNaN(v)) return false;
-        const targets = filteredData.map((it) => it[filterObj.targetType]);
-        if (targets.some((it) => typeof it !== 'number')) return false;
-        const f = createValidatorByComType(v, filterObj.compType);
-        if (f == null) return false;
-        return calcByCalcType(targets as number[], filterObj.calcType, f);
-      } else if (targetType === 'date' && valueType === 'date') {
-        const d = new Date(filterObj.value);
-        if (Number.isNaN(d.getTime())) return false;
-        const v = dateToNum(d);
-        const targets = convertToDateNumsOrNullByTargetType(filteredData, filterObj.targetType);
-        if (!targets) return false;
-        const f = createValidatorByComType(v, filterObj.compType);
-        if (f == null) return false;
-        return calcByCalcType(targets, filterObj.calcType, f);
-      } else if (targetType === 'date' && valueType === 'num') {
-        const v = Number(filterObj.value);
-        if (Number.isNaN(v)) return false;
-        const targets = convertToDateNumsOrNullByTargetType(filteredData, filterObj.targetType)
-            ?.map((it) => Math.abs(it - nowDateNumber));
-        if (!targets) return false;
-        const f = createValidatorByComType(v, filterObj.compType);
-        if (f == null) return false;
-        return calcByCalcType(targets, filterObj.calcType, f);
+    return filterBase.some((base) => {
+      let filteredData = data;
+      if (base.novelType === 'it') {
+        filteredData = filteredData.filter((it) => it.ncode.toLowerCase() == ncode.toLowerCase());
+      } else {
+        for (const filterObj of base.filters) {
+          const res = convertForCalc(filteredData, filterObj);
+          if (res === null || res.targets.length !== filteredData.length) return false;
+          filteredData = filteredData.filter((_, i) => res.validator(res.targets[i]));
+        }
       }
-      return false;
+      return base.conditions.every((filterObj) => {
+        const res = convertForCalc(filteredData, filterObj);
+        return res ? calcByCalcType(res.targets, filterObj.calcType, res.validator) : false;
+      });
     });
-  };
-}
-
-export function convertBasedOnNovelType(ncode: string, data: ApiNovelInfo[])
-  : Record<SimpleFilter['novelType'], ApiNovelInfo[]> {
-  return {
-    this: data.filter((it) => it.ncode.toLowerCase() == ncode.toLowerCase()),
-    normal: data.filter((it) => it['novel_type'] === 1),
-    short: data.filter((it) => it['novel_type'] === 2),
-    all: data,
   };
 }
 
@@ -145,7 +121,7 @@ export function dateToNum(date: Date): number {
   return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
 }
 
-export function convertToDateNumsOrNullByTargetType(data: ApiNovelInfo[], type: SimpleFilter['targetType'])
+export function convertToDateNumsOrNullByTargetType(data: ApiNovelInfo[], type: SimpleFilterCondition['targetType'])
   : number[] | null {
   let isValid = true;
   const v: number[] = data.map((it) => {
@@ -165,7 +141,7 @@ export function convertToDateNumsOrNullByTargetType(data: ApiNovelInfo[], type: 
   return isValid ? v : null;
 }
 
-export function createValidatorByComType(value: number, type: SimpleFilter['compType'])
+export function createValidatorByComType(value: number, type: SimpleFilterCondition['compType'])
   : ((n: number) => boolean) | null {
   switch (type) {
     case 'equal':
@@ -181,7 +157,43 @@ export function createValidatorByComType(value: number, type: SimpleFilter['comp
   }
 }
 
-export function calcByCalcType(target: number[], type: SimpleFilter['calcType'], validator
+export function convertForCalc(data: ApiNovelInfo[], condition: Omit<SimpleFilterCondition, 'calcType'>):
+  { targets: number[], validator: (n: number) => boolean } | null {
+  if (data.length === 0) return null;
+  const targetType = getTypeOrNull(data[0][condition.targetType]);
+  const valueType = getTypeOrNull(condition.value);
+
+  if (targetType === 'num' && valueType === 'num') {
+    const v = Number(condition.value);
+    if (Number.isNaN(v)) return null;
+    const targets = data.map((it) => it[condition.targetType]);
+    if (targets.some((it) => typeof it !== 'number')) return null;
+    const f = createValidatorByComType(v, condition.compType);
+    if (f == null) return null;
+    return {targets: targets as number[], validator: f};
+  } else if (targetType === 'date' && valueType === 'date') {
+    const d = new Date(condition.value);
+    if (Number.isNaN(d.getTime())) return null;
+    const v = dateToNum(d);
+    const targets = convertToDateNumsOrNullByTargetType(data, condition.targetType);
+    if (!targets) return null;
+    const f = createValidatorByComType(v, condition.compType);
+    if (f == null) return null;
+    return {targets, validator: f};
+  } else if (targetType === 'date' && valueType === 'num') {
+    const v = Number(condition.value);
+    if (Number.isNaN(v)) return null;
+    const nd = dateToNum(new Date());
+    const targets = convertToDateNumsOrNullByTargetType(data, condition.targetType)?.map((it) => Math.abs(it - nd));
+    if (!targets) return null;
+    const f = createValidatorByComType(v, condition.compType);
+    if (f == null) return null;
+    return {targets, validator: f};
+  }
+  return null;
+}
+
+export function calcByCalcType(target: number[], type: SimpleFilterCondition['calcType'], validator
   : (n: number) => boolean): boolean {
   switch (type) {
     case 'avg':

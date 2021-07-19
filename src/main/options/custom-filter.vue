@@ -15,44 +15,87 @@
     </div>
 
     <template v-if="useSimpleFilterComputed">
-      （各数値は https://dev.syosetu.com/man/api/ を参照）<br><br>
+      （各数値は <a href="https://dev.syosetu.com/man/api/">https://dev.syosetu.com/man/api/</a>> を参照）<br><br>
 
       <nav class="panel">
-        <template v-for="(obj, index) in simpleFilterComputed">
+        <div class="panel-block">
+          <nav class="pagination is-rounded is-small">
+            <pagenation v-model:page-no="pageNoComputed" v-bind:page-size="simpleFilterComputed.length"></pagenation>
+            <a class="pagination-next" v-on:click="addFilter">フィルターを追加</a>
+          </nav>
+        </div>
+        <template v-if="simpleFilterComputed.length > 0">
           <div class="panel-block">
-            <button type="button" class="button is-danger is-outlined is-small" v-on:click="remove(index)">×</button>
+            フィルターの対象:
             <div class="select is-small">
-              <select v-model="obj.novelType">
+              <select v-model="simpleFilterComputed[pageNoComputed].novelType">
                 <option v-for="item in novelTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
               </select>
             </div>
-            の
-            <div class="select is-small">
-              <select v-model="obj.targetType">
-                <option v-for="item in targetTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
-              </select>
-            </div>
-            <template v-if="obj.novelType!=='this'">
-              の
-              <div class="select is-small">
-                <select v-model="obj.calcType">
-                  <option v-for="item in calcTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
-                </select>
+            <button type="button" class="button is-danger is-small"
+                    v-on:click="removeFilter(pageNoComputed)">フィルターを削除する
+            </button>
+          </div>
+          <template v-if="simpleFilterComputed[pageNoComputed].novelType !== 'it'">
+            <template v-for="(obj, index) in simpleFilterComputed[pageNoComputed].filters">
+              <div class="panel-block">
+                <button type="button" class="delete is-danger is-small"
+                        v-on:click="removeNovelFilter(pageNoComputed, index)">×
+                </button>
+                <div class="select is-small">
+                  <select v-model="obj.targetType">
+                    <option v-for="item in targetTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+                  </select>
+                </div>
+                が
+                <input type="text" class="input is-small" style="width: 100px" v-model="obj.value">
+                <div class="select is-small">
+                  <select v-model="obj.compType">
+                    <option v-for="item in compTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+                  </select>
+                </div>
               </div>
             </template>
-            が
-            <input type="text" class="input is-small" style="width: 100px" v-model="obj.value">
-            <div class="select is-small">
-              <select v-model="obj.compType">
-                <option v-for="item in compTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
-              </select>
+            <div class="panel-block">
+              <button type="button" class="button is-light is-rounded is-small"
+                      v-on:click="addNovelFilter(pageNoComputed)">絞り込み条件を追加
+              </button>
             </div>
+          </template>
+          <template v-for="(obj, index) in simpleFilterComputed[pageNoComputed].conditions">
+            <div class="panel-block">
+              <button type="button" class="delete is-danger is-small"
+                      v-on:click="removeCondition(pageNoComputed, index)">×
+              </button>
+              <div class="select is-small">
+                <select v-model="obj.targetType">
+                  <option v-for="item in targetTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+                </select>
+              </div>
+              <template v-if="simpleFilterComputed[pageNoComputed].novelType!=='it'">
+                の
+                <div class="select is-small">
+                  <select v-model="obj.calcType">
+                    <option v-for="item in calcTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+                  </select>
+                </div>
+              </template>
+              が
+              <input type="text" class="input is-small" style="width: 100px" v-model="obj.value">
+              <div class="select is-small">
+                <select v-model="obj.compType">
+                  <option v-for="item in compTypeLabel" v-bind:value="item.value">{{ item.label }}</option>
+                </select>
+              </div>
+            </div>
+          </template>
+
+          <div class="panel-block">
+            <button type="button" class="button is-light is-rounded is-small"
+                    v-on:click="addCondition(pageNoComputed)">フィルター条件を追加
+            </button>
           </div>
         </template>
-
-        <div class="panel-block">
-          <button type="button" class="button is-light is-rounded is-small" v-on:click="add()">+</button>
-        </div>
       </nav>
     </template>
 
@@ -67,22 +110,23 @@
 
 <script lang="ts">
 import {defineComponent} from 'vue';
-import {SimpleFilter} from '../scripts/SettingsUtil';
+import {SimpleFilter, SimpleFilterCondition} from '../scripts/SettingsUtil';
+import Pagenation from './pagenation.vue';
 
-type Selection<T extends keyof SimpleFilter> = readonly { value: SimpleFilter[T], label: string }[];
+type Selection<T extends keyof SimpleFilterCondition> = readonly { value: SimpleFilterCondition[T], label: string }[];
 
 export default defineComponent({
+  components: {Pagenation},
   data(): {
-    novelTypeLabel: Selection<'novelType'>,
+    novelTypeLabel: readonly { value: SimpleFilter['novelType'], label: string }[],
     targetTypeLabel: Selection<'targetType'>,
     calcTypeLabel: Selection<'calcType'>,
     compTypeLabel: Selection<'compType'>,
+    pageNo: number,
   } {
     return {
       novelTypeLabel: [
-        {value: 'this', label: '小説'},
-        {value: 'normal', label: '作者の全長編'},
-        {value: 'short', label: '作者の全短編'},
+        {value: 'it', label: '小説'},
         {value: 'all', label: '作者の全小説'},
       ],
       targetTypeLabel: [
@@ -114,6 +158,7 @@ export default defineComponent({
         {value: 'lower', label: 'より小さい'},
         {value: 'higher', label: 'より大きい'},
       ],
+      pageNo: 0,
     };
   },
   props: {
@@ -128,17 +173,36 @@ export default defineComponent({
   emits: ['update:useCustomNgFilter', 'update:saveCustomNg', 'update:customFilter',
     'update:simpleFilter', 'update:useSimpleFilter'],
   methods: {
-    add(): void {
+    addFilter(): void {
       this.simpleFilterComputed.push({
-        novelType: 'this',
+        novelType: 'it',
+        filters: [],
+        conditions: [],
+      });
+    },
+    removeFilter(filterIndex: number): void {
+      this.simpleFilterComputed.splice(filterIndex, 1);
+    },
+    addNovelFilter(filterIndex: number): void {
+      this.simpleFilterComputed[filterIndex].filters.push({
+        targetType: 'end',
+        value: '1',
+        compType: 'equal',
+      });
+    },
+    removeNovelFilter(filterIndex: number, novelFilterIndex: number): void {
+      this.simpleFilterComputed[filterIndex].filters.splice(novelFilterIndex, 1);
+    },
+    addCondition(filterIndex: number): void {
+      this.simpleFilterComputed[filterIndex].conditions.push({
         targetType: 'general_lastup',
         calcType: 'every',
         value: '365',
         compType: 'lower',
       });
     },
-    remove(index: number): void {
-      this.simpleFilterComputed.splice(index, 1);
+    removeCondition(filterIndex: number, conditionIndex: number): void {
+      this.simpleFilterComputed[filterIndex].conditions.splice(conditionIndex, 1);
     },
   },
   computed: {
@@ -180,6 +244,15 @@ export default defineComponent({
       },
       set(v: Boolean) {
         this.$emit('update:useSimpleFilter', v);
+      },
+    },
+    pageNoComputed: {
+      get(): number {
+        return this.simpleFilter == undefined ? 0 : this.pageNo < this.simpleFilter.length ?
+            this.pageNo : this.simpleFilter.length - 1;
+      },
+      set(v: number) {
+        this.pageNo = v;
       },
     },
   },
